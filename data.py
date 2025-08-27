@@ -99,7 +99,6 @@ def generate_word(reg, max_repeat):
     return reg
 
 
-
 def generate_dataset(reg, size, max_repeat, train_split=None):
     '''
     Generated dataset given a regular expression and size
