@@ -16,7 +16,7 @@ def train_ea(args):
         # Create custom datasets
         # Example: accept the language {x in {0,1}* : Enc10(x) === 2 or 3 (mod 5)} UNION {lambda}
         # 0 <-> a, 1 <-> b
-        pos_data = []
+        pos_data = [""]  # add empty string explicitly
         neg_data = []
         for i in range(100):
             w = bin(i)[2:]
@@ -25,7 +25,6 @@ def train_ea(args):
                 pos_data.append(w)
             else:
                 neg_data.append(w)
-        pos_data.append("")  # add empty string explicitly
 
         pos_data = data.split_dataset(pos_data, args['train_split'])
         neg_data = data.split_dataset(neg_data, args['train_split'])
