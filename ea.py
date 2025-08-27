@@ -3,7 +3,6 @@ import random
 import copy
 
 
-
 def add_random_edge(individual, d, w, char):
 
     # Choose which layer to connect to (prev, curr, next)
@@ -26,24 +25,24 @@ def add_random_edge(individual, d, w, char):
     return individual
 
 
-
 def initialize_fa(min_depth, max_init_depth, width):
     '''
     Initializes a single finite automata
     '''
     alphabet = ['a', 'b']
 
-    individual = {'depth' : random.randint(min_depth, max_init_depth), 'width' : width}
+    individual = {'depth': random.randint(
+        min_depth, max_init_depth), 'width': width}
     individual['start'] = random.randint(0, individual['width'] - 1)
-    individual['fa'] = [[dict() for _ in range(individual['width'])] for _ in range(individual['depth'])]
+    individual['fa'] = [[dict() for _ in range(individual['width'])]
+                        for _ in range(individual['depth'])]
 
     for d in range(individual['depth']):
         for w in range(individual['width']):
             for char in alphabet:
                 individual = add_random_edge(individual, d, w, char)
-    
-    return individual
 
+    return individual
 
 
 def initialize_pop(pop_size, min_depth, max_init_depth, width):
@@ -54,7 +53,6 @@ def initialize_pop(pop_size, min_depth, max_init_depth, width):
     for _ in range(pop_size):
         population.append(initialize_fa(min_depth, max_init_depth, width))
     return population
-
 
 
 def evaluate_fa(fa, dataset):
@@ -78,16 +76,15 @@ def evaluate_fa(fa, dataset):
     return fitness
 
 
-
 def evaluate_fitness(population, pos_data, neg_data):
     '''
     Get fitness for each individual in the population
     '''
     fitness = []
     for individual in population:
-        fitness.append(evaluate_fa(individual, pos_data) - evaluate_fa(individual, neg_data))
+        fitness.append(evaluate_fa(individual, pos_data) -
+                       evaluate_fa(individual, neg_data))
     return fitness
-
 
 
 def return_active(fa):
@@ -120,7 +117,6 @@ def return_active(fa):
     return nodes
 
 
-
 def micro_mutate(individual, micro_mutate_rate):
     '''
     For every edge in the individual, randomly changes which node it's ingoing to
@@ -129,10 +125,9 @@ def micro_mutate(individual, micro_mutate_rate):
         for w, node in enumerate(row):
             for char in node.keys():
                 if np.random.binomial(1, 1 - micro_mutate_rate):
-                    individual = add_random_edge(individual, d, w, char)                    
+                    individual = add_random_edge(individual, d, w, char)
 
     return individual
-
 
 
 def macro_mutate(individual, macro_mutate_rate, min_depth, max_depth):
@@ -146,7 +141,7 @@ def macro_mutate(individual, macro_mutate_rate, min_depth, max_depth):
             add = True
         elif individual['depth'] == max_depth:
             remove = True
-        
+
         # Will always add if individual is the minimum depth, will never add if it's maximum depth
         if (random.randint(0, 1) or add) and not remove:
             row = random.randint(1, individual['depth'] - 1)
@@ -166,9 +161,8 @@ def macro_mutate(individual, macro_mutate_rate, min_depth, max_depth):
         elif remove:
             individual['fa'].pop(row)
             individual['depth'] -= 1
-        
-    return individual
 
+    return individual
 
 
 def crossover(parent1, parent2, crossover_rate, max_cross_dist, min_len, max_len):
@@ -189,11 +183,13 @@ def crossover(parent1, parent2, crossover_rate, max_cross_dist, min_len, max_len
 
     # Concatenate parents to create offspring
     offspring1 = copy.deepcopy(parent1)
-    offspring1['fa'] = offspring1['fa'][:cross_point1] + copy.deepcopy(parent2['fa'][cross_point2:])
+    offspring1['fa'] = offspring1['fa'][:cross_point1] + \
+        copy.deepcopy(parent2['fa'][cross_point2:])
     offspring1['depth'] = len(offspring1['fa'])
 
     offspring2 = copy.deepcopy(parent2)
-    offspring2['fa'] = offspring2['fa'][:cross_point2] + copy.deepcopy(parent1['fa'][cross_point1:])
+    offspring2['fa'] = offspring2['fa'][:cross_point2] + \
+        copy.deepcopy(parent1['fa'][cross_point1:])
     offspring2['depth'] = len(offspring2['fa'])
 
     # If the offspring lengths are invlaid return the parent instead
@@ -205,15 +201,17 @@ def crossover(parent1, parent2, crossover_rate, max_cross_dist, min_len, max_len
     return offspring1, offspring2
 
 
-
 def tournament(population, fitness, args, pos_data, neg_data, best_individual):
     '''
     Tournament parent selection, generates offspring and returns new population, fitnesses, and the best individual
     '''
     # Sample two tournaments, get fitnesses
-    parents = random.sample(range(len(population)), 2 * args['tournament_size'])
-    tourn1, tourn2 = parents[:args['tournament_size']], parents[args['tournament_size']:]
-    tourn1_fit, tourn2_fit = [fitness[ind] for ind in tourn1], [fitness[ind] for ind in tourn2]
+    parents = random.sample(range(len(population)),
+                            2 * args['tournament_size'])
+    tourn1, tourn2 = parents[:args['tournament_size']
+                             ], parents[args['tournament_size']:]
+    tourn1_fit, tourn2_fit = [fitness[ind]
+                              for ind in tourn1], [fitness[ind] for ind in tourn2]
 
     tourn1_winner = population[tourn1[np.argmax(tourn1_fit)]]
     tourn2_winner = population[tourn2[np.argmax(tourn2_fit)]]
@@ -222,22 +220,27 @@ def tournament(population, fitness, args, pos_data, neg_data, best_individual):
     loser1_ind, loser2_ind = np.argsort(tourn1_fit + tourn2_fit)[[0, 1]]
 
     # Perform crossover, then micro and macro mutations
-    offspring1, offspring2 = crossover(tourn1_winner, tourn2_winner, args['crossover_rate'], 
-                                              args['max_cross_dist'], args['min_depth'], args['max_depth'])
+    offspring1, offspring2 = crossover(tourn1_winner, tourn2_winner, args['crossover_rate'],
+                                       args['max_cross_dist'], args['min_depth'], args['max_depth'])
 
     offspring1 = micro_mutate(offspring1, args['micro_mutate_rate'])
     offspring2 = micro_mutate(offspring2, args['micro_mutate_rate'])
 
-    offspring1 = macro_mutate(offspring1, args['macro_mutate_rate'], args['min_depth'], args['max_depth'])
-    offspring2 = macro_mutate(offspring2, args['macro_mutate_rate'], args['min_depth'], args['max_depth'])
+    offspring1 = macro_mutate(
+        offspring1, args['macro_mutate_rate'], args['min_depth'], args['max_depth'])
+    offspring2 = macro_mutate(
+        offspring2, args['macro_mutate_rate'], args['min_depth'], args['max_depth'])
 
     population[loser1_ind], population[loser2_ind] = offspring1, offspring2
 
-    o1_fitness = evaluate_fa(offspring1, pos_data) - evaluate_fa(offspring1, neg_data)
-    o2_fitness = evaluate_fa(offspring2, pos_data) - evaluate_fa(offspring2, neg_data)
+    o1_fitness = evaluate_fa(offspring1, pos_data) - \
+        evaluate_fa(offspring1, neg_data)
+    o2_fitness = evaluate_fa(offspring2, pos_data) - \
+        evaluate_fa(offspring2, neg_data)
 
     if best_individual is not None:
-        best_fitness = evaluate_fa(best_individual, pos_data) - evaluate_fa(best_individual, neg_data)
+        best_fitness = evaluate_fa(
+            best_individual, pos_data) - evaluate_fa(best_individual, neg_data)
     else:
         best_fitness = -10000
 
@@ -260,7 +263,6 @@ def tournament(population, fitness, args, pos_data, neg_data, best_individual):
     return population, fitness, best_individual
 
 
-
 def print_fa(fa):
     '''
     Prints FA after removing intron
@@ -272,5 +274,6 @@ def print_fa(fa):
             if [i, j] in to_print:
                 print("Node (%d, %d):" % (i, j), end='')
                 for key, item in node.items():
-                    print("  %s -> (%d, %d)" % (key, i + item[0], item[1]), end='')
+                    print("  %s -> (%d, %d)" %
+                          (key, i + item[0], item[1]), end='')
                 print()
