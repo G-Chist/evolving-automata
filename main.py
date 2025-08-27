@@ -6,9 +6,27 @@ import time
 
 def train_ea(args):
 
-    # Generate valid and invalid examples
-    pos_data = data.generate_dataset(args['pos_reg'], args['n_data'], args['max_repeat'], args['train_split'])
-    neg_data = data.generate_dataset(args['neg_reg'], args['n_data'], args['max_repeat'], args['train_split'])
+    if not args['load_data_directly']:
+        # Generate valid and invalid examples
+        pos_data = data.generate_dataset(args['pos_reg'], args['n_data'], args['max_repeat'], args['train_split'])
+        neg_data = data.generate_dataset(args['neg_reg'], args['n_data'], args['max_repeat'], args['train_split'])
+    else:
+        # Create custom datasets
+        # Example: accept the language {x in {0,1}* : Enc10(x) === 2 or 3 (mod 5)} UNION {lambda}
+        # 0 <-> a, 1 <-> b
+        pos_data = []
+        neg_data = []
+        for i in range(100):
+            w = bin(i)[2:]
+            w = w.replace("0", "a").replace("1", "b")
+            if i % 5 in (2, 3):
+                pos_data.append(w)
+            else:
+                neg_data.append(w)
+        pos_data.append("")  # add empty string explicitly
+
+        pos_data = data.split_dataset(pos_data, args['train_split'])
+        neg_data = data.split_dataset(neg_data, args['train_split'])
 
     population = ea.initialize_pop(args['pop_size'], args['min_depth'], args['max_init_depth'], args['width'])
     fitness = ea.evaluate_fitness(population, pos_data['train'], neg_data['train'])

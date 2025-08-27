@@ -110,15 +110,21 @@ def generate_dataset(reg, size, max_repeat, train_split=None):
         data.add(generate_word(reg, max_repeat))
     data = list(data)
 
+    return split_dataset(data, train_split)
+
+
+def split_dataset(dataset, train_split=None):
+    '''
+    Splits a dataset
+    '''
     if train_split is None:
-        return data
+        return dataset
 
-    split_ind = int(len(data) * train_split)
-    train_data = data[:split_ind]
-    test_data = data[split_ind:]
+    split_ind = int(len(dataset) * train_split)
+    train_data = dataset[:split_ind]
+    test_data = dataset[split_ind:]
 
-    return {'train' : train_data, 'test' : test_data}
-
+    return {'train': train_data, 'test': test_data}
 
 
 def generate_dataset_nn(pos_reg, neg_reg, size, batch, train_split, max_repeat, usecuda):
